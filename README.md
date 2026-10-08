@@ -32,7 +32,7 @@
 13. [Automated CI/CD Pipeline (GitHub Actions)](#-automated-cicd-pipeline-github-actions)
 14. [Repository Structure](#-repository-structure)
 15. [Quickstart & Reproduction Guide](#-quickstart--reproduction-guide)
-16. [Resume Bullet Points](#-resume-bullet-points)
+16. [License](#-license)
 
 ---
 
