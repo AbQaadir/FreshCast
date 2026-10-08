@@ -54,9 +54,10 @@ jobs:
           uv venv
           uv pip install -e ".[dev]"
 
-      - name: Generate synthetic dataset for testing
+      - name: Generate synthetic dataset and train model for testing
         run: |
           uv run python -m freshcast.data.generator
+          uv run python -m freshcast.models.train
 
       - name: Run Pytest Suite
         run: |

@@ -1,13 +1,24 @@
 """Unit tests for FreshCast FastAPI endpoints."""
 
+from pathlib import Path
+
 import pytest
 from fastapi.testclient import TestClient
 
 from freshcast.api.app import app
+from freshcast.data.generator import FoodserviceDataGenerator
+from freshcast.models.train import run_pipeline
 
 
 @pytest.fixture(scope="module")
 def client():
+    if not Path("data/raw/foodservice_daily_sales.csv").exists():
+        gen = FoodserviceDataGenerator()
+        df = gen.generate()
+        gen.save(df)
+    if not Path("models/champion_model.joblib").exists():
+        run_pipeline()
+
     with TestClient(app) as test_client:
         yield test_client
 
