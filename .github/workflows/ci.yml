@@ -88,7 +88,7 @@ jobs:
 
       - name: Verify DVC Pipeline Execution
         run: |
-          uv run dvc repro --dry
+          uv run dvc repro --force --no-run-cache
 
   docker-build-verification:
     name: Container Build Verification
