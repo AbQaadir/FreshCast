@@ -7,7 +7,7 @@ non-overlapping test horizons.
 from __future__ import annotations
 
 import logging
-from typing import Any, Dict, List, Tuple
+from typing import Any
 
 import numpy as np
 import pandas as pd
@@ -35,7 +35,7 @@ class WalkForwardBacktester:
 
     def generate_splits(
         self, df: pd.DataFrame, date_col: str = "date"
-    ) -> List[Tuple[pd.Timestamp, pd.Timestamp, pd.Timestamp]]:
+    ) -> list[tuple[pd.Timestamp, pd.Timestamp, pd.Timestamp]]:
         """Generates (train_cutoff, test_start, test_end) for each fold."""
         unique_dates = pd.to_datetime(df[date_col]).drop_duplicates().sort_values()
         max_date = unique_dates.max()
@@ -61,7 +61,7 @@ class WalkForwardBacktester:
     ) -> pd.DataFrame:
         """Evaluates a single model across all walk-forward folds."""
         splits = self.generate_splits(df)
-        fold_results: List[Dict[str, Any]] = []
+        fold_results: list[dict[str, Any]] = []
 
         logger.info(
             "Starting walk-forward validation for %s across %d folds (window: %d days)...",
@@ -131,12 +131,12 @@ class WalkForwardBacktester:
 
     def benchmark_models(
         self,
-        models: List[BaseDemandForecaster],
+        models: list[BaseDemandForecaster],
         df: pd.DataFrame,
         pipeline: TimeSeriesFeaturePipeline,
-    ) -> Tuple[pd.DataFrame, pd.DataFrame]:
+    ) -> tuple[pd.DataFrame, pd.DataFrame]:
         """Benchmarks all candidate models and computes mean aggregate performance."""
-        all_fold_dfs: List[pd.DataFrame] = []
+        all_fold_dfs: list[pd.DataFrame] = []
 
         for model in models:
             fold_df = self.evaluate_model(model, df, pipeline)
@@ -147,17 +147,19 @@ class WalkForwardBacktester:
         # Aggregate summary table (mean across folds)
         summary = (
             full_results.groupby("model")
-            .agg({
-                "wape": "mean",
-                "mae": "mean",
-                "rmse": "mean",
-                "smape": "mean",
-                "bias": "mean",
-                "total_financial_loss_usd": "mean",
-                "spoilage_loss_usd": "mean",
-                "stockout_loss_usd": "mean",
-                "loss_per_demand_case_usd": "mean",
-            })
+            .agg(
+                {
+                    "wape": "mean",
+                    "mae": "mean",
+                    "rmse": "mean",
+                    "smape": "mean",
+                    "bias": "mean",
+                    "total_financial_loss_usd": "mean",
+                    "spoilage_loss_usd": "mean",
+                    "stockout_loss_usd": "mean",
+                    "loss_per_demand_case_usd": "mean",
+                }
+            )
             .reset_index()
             .sort_values(by="wape")
             .reset_index(drop=True)

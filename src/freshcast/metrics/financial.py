@@ -7,8 +7,6 @@ Simulates bottom-line P&L impact for regional foodservice distribution centers:
 
 from __future__ import annotations
 
-from typing import Dict
-
 import numpy as np
 import pandas as pd
 
@@ -21,16 +19,12 @@ def calculate_supply_chain_financial_loss(
     unit_price_col: str = "actual_unit_price",
     spoilage_factor_col: str = "spoilage_cost_factor",
     stockout_multiplier_col: str = "stockout_penalty_multiplier",
-) -> Dict[str, float]:
+) -> dict[str, float]:
     """Calculates asymmetric monetary loss for over-forecasting vs under-forecasting."""
     y_true = df[actual_col].to_numpy()
     y_pred = np.clip(df[pred_col].to_numpy(), 0, None)
     unit_cost = df[unit_cost_col].to_numpy()
-    unit_price = (
-        df[unit_price_col].to_numpy()
-        if unit_price_col in df.columns
-        else unit_cost * 1.30
-    )
+    unit_price = df[unit_price_col].to_numpy() if unit_price_col in df.columns else unit_cost * 1.30
     margin = np.maximum(unit_price - unit_cost, 0.0)
 
     spoilage_factors = (
@@ -58,9 +52,7 @@ def calculate_supply_chain_financial_loss(
 
     total_financial_loss = spoilage_cost + stockout_cost
     total_actual_cases = np.sum(y_true)
-    loss_per_case = (
-        total_financial_loss / total_actual_cases if total_actual_cases > 0 else 0.0
-    )
+    loss_per_case = total_financial_loss / total_actual_cases if total_actual_cases > 0 else 0.0
 
     return {
         "total_financial_loss_usd": float(total_financial_loss),

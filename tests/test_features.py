@@ -2,7 +2,6 @@
 
 import numpy as np
 import pandas as pd
-import pytest
 
 from freshcast.features.calendar import CalendarFeatureExtractor
 from freshcast.features.lags import LagFeatureExtractor
@@ -27,12 +26,14 @@ def test_calendar_feature_extractor():
 def test_lag_feature_extractor_no_lookahead_leakage():
     # Construct synthetic series: sales = 10, 20, 30, 40, 50
     dates = pd.date_range("2023-01-01", periods=5, freq="D")
-    df = pd.DataFrame({
-        "date": dates,
-        "dc_id": "DC_1",
-        "sku_id": "SKU_1",
-        "sales_cases": [10.0, 20.0, 30.0, 40.0, 50.0],
-    })
+    df = pd.DataFrame(
+        {
+            "date": dates,
+            "dc_id": "DC_1",
+            "sku_id": "SKU_1",
+            "sales_cases": [10.0, 20.0, 30.0, 40.0, 50.0],
+        }
+    )
 
     extractor = LagFeatureExtractor(lags=[1, 2], rolling_windows=[2])
     res = extractor.transform(df)
@@ -50,17 +51,19 @@ def test_lag_feature_extractor_no_lookahead_leakage():
 
 def test_pipeline_transform_end_to_end():
     dates = pd.date_range("2023-01-01", periods=40, freq="D")
-    df = pd.DataFrame({
-        "date": dates,
-        "dc_id": "DC_BOS",
-        "sku_id": "SKU_BEEF",
-        "category": "Meat",
-        "base_unit_price": 100.0,
-        "actual_unit_price": 90.0,
-        "discount_pct": 0.10,
-        "is_promo": 1,
-        "sales_cases": np.random.randint(50, 150, size=40),
-    })
+    df = pd.DataFrame(
+        {
+            "date": dates,
+            "dc_id": "DC_BOS",
+            "sku_id": "SKU_BEEF",
+            "category": "Meat",
+            "base_unit_price": 100.0,
+            "actual_unit_price": 90.0,
+            "discount_pct": 0.10,
+            "is_promo": 1,
+            "sales_cases": np.random.randint(50, 150, size=40),
+        }
+    )
 
     pipeline = TimeSeriesFeaturePipeline(lags=[1, 7], rolling_windows=[7])
     X, y, feature_cols = pipeline.prepare_train_matrices(df)

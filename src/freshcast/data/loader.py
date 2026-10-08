@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import logging
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any
 
 import pandas as pd
 import yaml
@@ -23,10 +23,10 @@ class DataLoader:
         "sales_cases",
     ]
 
-    def __init__(self, config_path: Optional[str | Path] = None):
+    def __init__(self, config_path: str | Path | None = None):
         self.config = self._load_config(config_path)
 
-    def _load_config(self, config_path: Optional[str | Path]) -> Dict[str, Any]:
+    def _load_config(self, config_path: str | Path | None) -> dict[str, Any]:
         if config_path is None:
             candidate = Path(__file__).resolve().parents[3] / "configs" / "default_config.yaml"
             if candidate.exists():
@@ -40,7 +40,7 @@ class DataLoader:
                 return yaml.safe_load(f)
         return {}
 
-    def load_raw_data(self, file_path: Optional[str | Path] = None) -> pd.DataFrame:
+    def load_raw_data(self, file_path: str | Path | None = None) -> pd.DataFrame:
         """Loads raw foodservice sales CSV and ensures date typing and ordering."""
         if file_path is None:
             raw_dir = Path(self.config.get("data", {}).get("raw_dir", "data/raw"))
@@ -71,7 +71,7 @@ class DataLoader:
         df = df.sort_values(by=["dc_id", "sku_id", "date"]).reset_index(drop=True)
 
         # Ensure complete grid (no missing dates in time-series)
-        complete_dfs: List[pd.DataFrame] = []
+        complete_dfs: list[pd.DataFrame] = []
         for (dc, sku), group in df.groupby(["dc_id", "sku_id"]):
             min_date = group["date"].min()
             max_date = group["date"].max()
@@ -89,12 +89,16 @@ class DataLoader:
         full_df = pd.concat(complete_dfs, ignore_index=True)
         full_df = full_df.sort_values(by=["dc_id", "sku_id", "date"]).reset_index(drop=True)
 
-        logger.info("Validated dataset: %d rows across %d series.", len(full_df), len(complete_dfs))
+        logger.info(
+            "Validated dataset: %d rows across %d series.",
+            len(full_df),
+            len(complete_dfs),
+        )
         return full_df
 
     def split_train_test_by_date(
         self, df: pd.DataFrame, test_days: int = 28
-    ) -> Tuple[pd.DataFrame, pd.DataFrame]:
+    ) -> tuple[pd.DataFrame, pd.DataFrame]:
         """Strict temporal split: hold out the last `test_days` for out-of-time evaluation."""
         max_date = df["date"].max()
         cutoff_date = max_date - pd.Timedelta(days=test_days - 1)

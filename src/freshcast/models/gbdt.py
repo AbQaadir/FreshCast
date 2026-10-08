@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import logging
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 import lightgbm as lgb
 import numpy as np
@@ -34,23 +34,23 @@ class LightGBMForecaster(BaseDemandForecaster):
         "n_jobs": -1,
     }
 
-    def __init__(self, params: Optional[Dict[str, Any]] = None):
+    def __init__(self, params: dict[str, Any] | None = None):
         combined_params = {**self.DEFAULT_PARAMS, **(params or {})}
         super().__init__(name="LightGBM Regressor", params=combined_params)
-        self.model: Optional[lgb.LGBMRegressor] = None
-        self.feature_names_: List[str] = []
+        self.model: lgb.LGBMRegressor | None = None
+        self.feature_names_: list[str] = []
 
     def fit(
         self,
         X: pd.DataFrame,
         y: pd.Series,
-        eval_set: Optional[List[tuple]] = None,
+        eval_set: list[tuple] | None = None,
         **kwargs,
     ) -> LightGBMForecaster:
         self.feature_names_ = list(X.columns)
         self.model = lgb.LGBMRegressor(**self.params)
 
-        fit_params: Dict[str, Any] = {}
+        fit_params: dict[str, Any] = {}
         if eval_set:
             fit_params["eval_set"] = eval_set
             fit_params["callbacks"] = [lgb.early_stopping(stopping_rounds=20, verbose=False)]
@@ -71,10 +71,16 @@ class LightGBMForecaster(BaseDemandForecaster):
         if not self.is_fitted or self.model is None:
             raise RuntimeError("Model not fitted.")
         importance = self.model.feature_importances_
-        df = pd.DataFrame({
-            "feature": self.feature_names_,
-            "importance": importance,
-        }).sort_values(by="importance", ascending=False).reset_index(drop=True)
+        df = (
+            pd.DataFrame(
+                {
+                    "feature": self.feature_names_,
+                    "importance": importance,
+                }
+            )
+            .sort_values(by="importance", ascending=False)
+            .reset_index(drop=True)
+        )
         return df
 
 
@@ -93,23 +99,23 @@ class XGBoostForecaster(BaseDemandForecaster):
         "n_jobs": -1,
     }
 
-    def __init__(self, params: Optional[Dict[str, Any]] = None):
+    def __init__(self, params: dict[str, Any] | None = None):
         combined_params = {**self.DEFAULT_PARAMS, **(params or {})}
         super().__init__(name="XGBoost Regressor", params=combined_params)
-        self.model: Optional[xgb.XGBRegressor] = None
-        self.feature_names_: List[str] = []
+        self.model: xgb.XGBRegressor | None = None
+        self.feature_names_: list[str] = []
 
     def fit(
         self,
         X: pd.DataFrame,
         y: pd.Series,
-        eval_set: Optional[List[tuple]] = None,
+        eval_set: list[tuple] | None = None,
         **kwargs,
     ) -> XGBoostForecaster:
         self.feature_names_ = list(X.columns)
         self.model = xgb.XGBRegressor(**self.params)
 
-        fit_params: Dict[str, Any] = {}
+        fit_params: dict[str, Any] = {}
         if eval_set:
             fit_params["eval_set"] = eval_set
             fit_params["verbose"] = False
@@ -129,8 +135,14 @@ class XGBoostForecaster(BaseDemandForecaster):
         if not self.is_fitted or self.model is None:
             raise RuntimeError("Model not fitted.")
         importance = self.model.feature_importances_
-        df = pd.DataFrame({
-            "feature": self.feature_names_,
-            "importance": importance,
-        }).sort_values(by="importance", ascending=False).reset_index(drop=True)
+        df = (
+            pd.DataFrame(
+                {
+                    "feature": self.feature_names_,
+                    "importance": importance,
+                }
+            )
+            .sort_values(by="importance", ascending=False)
+            .reset_index(drop=True)
+        )
         return df

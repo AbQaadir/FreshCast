@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import logging
-from typing import List, Optional, Tuple
 
 import pandas as pd
 from sklearn.preprocessing import LabelEncoder
@@ -22,8 +21,8 @@ class TimeSeriesFeaturePipeline:
 
     def __init__(
         self,
-        lags: Optional[List[int]] = None,
-        rolling_windows: Optional[List[int]] = None,
+        lags: list[int] | None = None,
+        rolling_windows: list[int] | None = None,
         country: str = "US",
     ):
         self.calendar_extractor = CalendarFeatureExtractor(country=country)
@@ -35,7 +34,7 @@ class TimeSeriesFeaturePipeline:
         )
         self.label_encoders = {col: LabelEncoder() for col in self.CATEGORICAL_COLS}
         self.is_fitted = False
-        self.feature_cols: List[str] = []
+        self.feature_cols: list[str] = []
 
     def fit(self, df: pd.DataFrame) -> TimeSeriesFeaturePipeline:
         for col in self.CATEGORICAL_COLS:
@@ -58,9 +57,7 @@ class TimeSeriesFeaturePipeline:
 
         # 3. Price & Promotional Features
         if "actual_unit_price" in data.columns and "base_unit_price" in data.columns:
-            data["relative_price"] = data["actual_unit_price"] / (
-                data["base_unit_price"] + 1e-5
-            )
+            data["relative_price"] = data["actual_unit_price"] / (data["base_unit_price"] + 1e-5)
         if "discount_pct" not in data.columns:
             data["discount_pct"] = 0.0
         if "is_promo" not in data.columns:
@@ -71,8 +68,10 @@ class TimeSeriesFeaturePipeline:
             if col in data.columns:
                 # Handle unseen categories smoothly
                 classes = set(self.label_encoders[col].classes_)
-                safe_series = data[col].astype(str).map(
-                    lambda x: x if x in classes else self.label_encoders[col].classes_[0]
+                safe_series = (
+                    data[col]
+                    .astype(str)
+                    .map(lambda x: (x if x in classes else self.label_encoders[col].classes_[0]))
                 )
                 data[f"{col}_encoded"] = self.label_encoders[col].transform(safe_series)
 
@@ -94,18 +93,22 @@ class TimeSeriesFeaturePipeline:
             "stockout_penalty_multiplier",
         }
         self.feature_cols = [
-            c for c in data.columns if c not in exclude_cols and pd.api.types.is_numeric_dtype(data[c])
+            c
+            for c in data.columns
+            if c not in exclude_cols and pd.api.types.is_numeric_dtype(data[c])
         ]
 
-        logger.info("Transformed feature matrix: %d rows, %d engineered features.", len(data), len(self.feature_cols))
+        logger.info(
+            "Transformed feature matrix: %d rows, %d engineered features.",
+            len(data),
+            len(self.feature_cols),
+        )
         return data
 
     def fit_transform(self, df: pd.DataFrame, drop_na: bool = True) -> pd.DataFrame:
         return self.fit(df).transform(df, drop_na=drop_na)
 
-    def prepare_train_matrices(
-        self, df: pd.DataFrame
-    ) -> Tuple[pd.DataFrame, pd.Series, List[str]]:
+    def prepare_train_matrices(self, df: pd.DataFrame) -> tuple[pd.DataFrame, pd.Series, list[str]]:
         """Prepares feature matrix X and target vector y for ML models."""
         transformed = self.transform(df, drop_na=True)
         X = transformed[self.feature_cols]

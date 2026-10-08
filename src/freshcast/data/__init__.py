@@ -3,4 +3,4 @@
 from freshcast.data.generator import FoodserviceDataGenerator
 from freshcast.data.loader import DataLoader
 
-__all__ = ["FoodserviceDataGenerator", "DataLoader"]
+__all__ = ["DataLoader", "FoodserviceDataGenerator"]

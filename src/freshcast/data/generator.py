@@ -14,7 +14,7 @@ from __future__ import annotations
 import logging
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 import numpy as np
 import pandas as pd
@@ -75,21 +75,19 @@ class FoodserviceDataGenerator:
         (12, 31, "New Year's Eve", 4, 1.40),
     ]
 
-    def __init__(self, config_path: Optional[str | Path] = None):
+    def __init__(self, config_path: str | Path | None = None):
         self.config = self._load_config(config_path)
         self.random_seed = self.config.get("project", {}).get("random_seed", 42)
         np.random.seed(self.random_seed)
 
-        self.dcs: List[DCConfig] = [
+        self.dcs: list[DCConfig] = [
             DCConfig(**dc) for dc in self.config.get("distribution_centers", [])
         ]
-        self.skus: List[SKUConfig] = [
-            SKUConfig(**sku) for sku in self.config.get("skus", [])
-        ]
+        self.skus: list[SKUConfig] = [SKUConfig(**sku) for sku in self.config.get("skus", [])]
         self.start_date = self.config.get("data", {}).get("start_date", "2022-01-01")
         self.end_date = self.config.get("data", {}).get("end_date", "2024-03-31")
 
-    def _load_config(self, config_path: Optional[str | Path]) -> Dict[str, Any]:
+    def _load_config(self, config_path: str | Path | None) -> dict[str, Any]:
         if config_path is None:
             # Look in standard repo location
             candidate = Path(__file__).resolve().parents[3] / "configs" / "default_config.yaml"
@@ -105,26 +103,155 @@ class FoodserviceDataGenerator:
         logger.warning("Config file not found at %s. Using default fallback configuration.", path)
         return self._default_fallback_config()
 
-    def _default_fallback_config(self) -> Dict[str, Any]:
+    def _default_fallback_config(self) -> dict[str, Any]:
         return {
             "project": {"random_seed": 42},
-            "data": {"start_date": "2022-01-01", "end_date": "2024-03-31", "raw_dir": "data/raw"},
+            "data": {
+                "start_date": "2022-01-01",
+                "end_date": "2024-03-31",
+                "raw_dir": "data/raw",
+            },
             "distribution_centers": [
-                {"id": "DC_BOS", "name": "Northeast DC (Boston)", "capacity_cases": 500000, "base_volume_multiplier": 1.15},
-                {"id": "DC_ATL", "name": "Southeast DC (Atlanta)", "capacity_cases": 650000, "base_volume_multiplier": 1.25},
-                {"id": "DC_CHI", "name": "Midwest DC (Chicago)", "capacity_cases": 750000, "base_volume_multiplier": 1.40},
+                {
+                    "id": "DC_BOS",
+                    "name": "Northeast DC (Boston)",
+                    "capacity_cases": 500000,
+                    "base_volume_multiplier": 1.15,
+                },
+                {
+                    "id": "DC_ATL",
+                    "name": "Southeast DC (Atlanta)",
+                    "capacity_cases": 650000,
+                    "base_volume_multiplier": 1.25,
+                },
+                {
+                    "id": "DC_CHI",
+                    "name": "Midwest DC (Chicago)",
+                    "capacity_cases": 750000,
+                    "base_volume_multiplier": 1.40,
+                },
             ],
             "skus": [
-                {"id": "SKU_BEEF_SIRLOIN", "name": "Choice Beef Sirloin", "category": "Meat & Poultry", "shelf_life_days": 6, "lead_time_days": 2, "unit_cost": 85.0, "unit_price": 110.0, "spoilage_cost_factor": 1.0, "stockout_penalty_multiplier": 1.5, "base_daily_demand": 120},
-                {"id": "SKU_CHICKEN_BREAST", "name": "Chicken Breast", "category": "Meat & Poultry", "shelf_life_days": 5, "lead_time_days": 2, "unit_cost": 62.0, "unit_price": 82.0, "spoilage_cost_factor": 1.0, "stockout_penalty_multiplier": 1.4, "base_daily_demand": 240},
-                {"id": "SKU_SALMON_FILLET", "name": "Atlantic Salmon", "category": "Seafood", "shelf_life_days": 4, "lead_time_days": 2, "unit_cost": 95.0, "unit_price": 130.0, "spoilage_cost_factor": 1.0, "stockout_penalty_multiplier": 1.6, "base_daily_demand": 90},
-                {"id": "SKU_ROMAINE_HEARTS", "name": "Romaine Hearts", "category": "Produce", "shelf_life_days": 5, "lead_time_days": 1, "unit_cost": 18.0, "unit_price": 28.0, "spoilage_cost_factor": 1.0, "stockout_penalty_multiplier": 1.3, "base_daily_demand": 320},
-                {"id": "SKU_ROMA_TOMATOES", "name": "Roma Tomatoes", "category": "Produce", "shelf_life_days": 6, "lead_time_days": 1, "unit_cost": 22.0, "unit_price": 34.0, "spoilage_cost_factor": 1.0, "stockout_penalty_multiplier": 1.3, "base_daily_demand": 280},
-                {"id": "SKU_AVOCADO_HASS", "name": "Hass Avocados", "category": "Produce", "shelf_life_days": 5, "lead_time_days": 2, "unit_cost": 38.0, "unit_price": 54.0, "spoilage_cost_factor": 0.9, "stockout_penalty_multiplier": 1.4, "base_daily_demand": 160},
-                {"id": "SKU_HEAVY_CREAM", "name": "Heavy Cream 36%", "category": "Dairy", "shelf_life_days": 14, "lead_time_days": 2, "unit_cost": 32.0, "unit_price": 45.0, "spoilage_cost_factor": 0.8, "stockout_penalty_multiplier": 1.25, "base_daily_demand": 180},
-                {"id": "SKU_CHEDDAR_CHEESE", "name": "White Cheddar", "category": "Dairy", "shelf_life_days": 28, "lead_time_days": 3, "unit_cost": 42.0, "unit_price": 58.0, "spoilage_cost_factor": 0.5, "stockout_penalty_multiplier": 1.2, "base_daily_demand": 150},
-                {"id": "SKU_FRENCH_FRIES", "name": "Thin French Fries", "category": "Frozen", "shelf_life_days": 180, "lead_time_days": 4, "unit_cost": 24.0, "unit_price": 36.0, "spoilage_cost_factor": 0.1, "stockout_penalty_multiplier": 1.2, "base_daily_demand": 450},
-                {"id": "SKU_CANOLA_OIL", "name": "Canola Frying Oil", "category": "Dry & Pantry", "shelf_life_days": 240, "lead_time_days": 5, "unit_cost": 28.0, "unit_price": 40.0, "spoilage_cost_factor": 0.05, "stockout_penalty_multiplier": 1.2, "base_daily_demand": 210},
+                {
+                    "id": "SKU_BEEF_SIRLOIN",
+                    "name": "Choice Beef Sirloin",
+                    "category": "Meat & Poultry",
+                    "shelf_life_days": 6,
+                    "lead_time_days": 2,
+                    "unit_cost": 85.0,
+                    "unit_price": 110.0,
+                    "spoilage_cost_factor": 1.0,
+                    "stockout_penalty_multiplier": 1.5,
+                    "base_daily_demand": 120,
+                },
+                {
+                    "id": "SKU_CHICKEN_BREAST",
+                    "name": "Chicken Breast",
+                    "category": "Meat & Poultry",
+                    "shelf_life_days": 5,
+                    "lead_time_days": 2,
+                    "unit_cost": 62.0,
+                    "unit_price": 82.0,
+                    "spoilage_cost_factor": 1.0,
+                    "stockout_penalty_multiplier": 1.4,
+                    "base_daily_demand": 240,
+                },
+                {
+                    "id": "SKU_SALMON_FILLET",
+                    "name": "Atlantic Salmon",
+                    "category": "Seafood",
+                    "shelf_life_days": 4,
+                    "lead_time_days": 2,
+                    "unit_cost": 95.0,
+                    "unit_price": 130.0,
+                    "spoilage_cost_factor": 1.0,
+                    "stockout_penalty_multiplier": 1.6,
+                    "base_daily_demand": 90,
+                },
+                {
+                    "id": "SKU_ROMAINE_HEARTS",
+                    "name": "Romaine Hearts",
+                    "category": "Produce",
+                    "shelf_life_days": 5,
+                    "lead_time_days": 1,
+                    "unit_cost": 18.0,
+                    "unit_price": 28.0,
+                    "spoilage_cost_factor": 1.0,
+                    "stockout_penalty_multiplier": 1.3,
+                    "base_daily_demand": 320,
+                },
+                {
+                    "id": "SKU_ROMA_TOMATOES",
+                    "name": "Roma Tomatoes",
+                    "category": "Produce",
+                    "shelf_life_days": 6,
+                    "lead_time_days": 1,
+                    "unit_cost": 22.0,
+                    "unit_price": 34.0,
+                    "spoilage_cost_factor": 1.0,
+                    "stockout_penalty_multiplier": 1.3,
+                    "base_daily_demand": 280,
+                },
+                {
+                    "id": "SKU_AVOCADO_HASS",
+                    "name": "Hass Avocados",
+                    "category": "Produce",
+                    "shelf_life_days": 5,
+                    "lead_time_days": 2,
+                    "unit_cost": 38.0,
+                    "unit_price": 54.0,
+                    "spoilage_cost_factor": 0.9,
+                    "stockout_penalty_multiplier": 1.4,
+                    "base_daily_demand": 160,
+                },
+                {
+                    "id": "SKU_HEAVY_CREAM",
+                    "name": "Heavy Cream 36%",
+                    "category": "Dairy",
+                    "shelf_life_days": 14,
+                    "lead_time_days": 2,
+                    "unit_cost": 32.0,
+                    "unit_price": 45.0,
+                    "spoilage_cost_factor": 0.8,
+                    "stockout_penalty_multiplier": 1.25,
+                    "base_daily_demand": 180,
+                },
+                {
+                    "id": "SKU_CHEDDAR_CHEESE",
+                    "name": "White Cheddar",
+                    "category": "Dairy",
+                    "shelf_life_days": 28,
+                    "lead_time_days": 3,
+                    "unit_cost": 42.0,
+                    "unit_price": 58.0,
+                    "spoilage_cost_factor": 0.5,
+                    "stockout_penalty_multiplier": 1.2,
+                    "base_daily_demand": 150,
+                },
+                {
+                    "id": "SKU_FRENCH_FRIES",
+                    "name": "Thin French Fries",
+                    "category": "Frozen",
+                    "shelf_life_days": 180,
+                    "lead_time_days": 4,
+                    "unit_cost": 24.0,
+                    "unit_price": 36.0,
+                    "spoilage_cost_factor": 0.1,
+                    "stockout_penalty_multiplier": 1.2,
+                    "base_daily_demand": 450,
+                },
+                {
+                    "id": "SKU_CANOLA_OIL",
+                    "name": "Canola Frying Oil",
+                    "category": "Dry & Pantry",
+                    "shelf_life_days": 240,
+                    "lead_time_days": 5,
+                    "unit_cost": 28.0,
+                    "unit_price": 40.0,
+                    "spoilage_cost_factor": 0.05,
+                    "stockout_penalty_multiplier": 1.2,
+                    "base_daily_demand": 210,
+                },
             ],
         }
 
@@ -166,9 +293,14 @@ class FoodserviceDataGenerator:
         """Generates the full panel dataset across dates, distribution centers, and SKUs."""
         date_range = pd.date_range(start=self.start_date, end=self.end_date, freq="D")
         n_days = len(date_range)
-        logger.info("Generating %d daily timestamps from %s to %s", n_days, self.start_date, self.end_date)
+        logger.info(
+            "Generating %d daily timestamps from %s to %s",
+            n_days,
+            self.start_date,
+            self.end_date,
+        )
 
-        records: List[Dict[str, Any]] = []
+        records: list[dict[str, Any]] = []
 
         # Overall macroeconomic linear trend (e.g. 3% annual business growth)
         trend = np.linspace(1.0, 1.07, n_days)
@@ -226,24 +358,26 @@ class FoodserviceDataGenerator:
                     # Ensure positive sales
                     actual_sales = max(0, actual_sales)
 
-                    records.append({
-                        "date": date.strftime("%Y-%m-%d"),
-                        "dc_id": dc.id,
-                        "dc_name": dc.name,
-                        "sku_id": sku.id,
-                        "sku_name": sku.name,
-                        "category": sku.category,
-                        "shelf_life_days": sku.shelf_life_days,
-                        "lead_time_days": sku.lead_time_days,
-                        "unit_cost": sku.unit_cost,
-                        "base_unit_price": sku.unit_price,
-                        "actual_unit_price": actual_unit_price,
-                        "discount_pct": round(price_discount, 2),
-                        "is_promo": int(promo_active[i]),
-                        "spoilage_cost_factor": sku.spoilage_cost_factor,
-                        "stockout_penalty_multiplier": sku.stockout_penalty_multiplier,
-                        "sales_cases": actual_sales,
-                    })
+                    records.append(
+                        {
+                            "date": date.strftime("%Y-%m-%d"),
+                            "dc_id": dc.id,
+                            "dc_name": dc.name,
+                            "sku_id": sku.id,
+                            "sku_name": sku.name,
+                            "category": sku.category,
+                            "shelf_life_days": sku.shelf_life_days,
+                            "lead_time_days": sku.lead_time_days,
+                            "unit_cost": sku.unit_cost,
+                            "base_unit_price": sku.unit_price,
+                            "actual_unit_price": actual_unit_price,
+                            "discount_pct": round(price_discount, 2),
+                            "is_promo": int(promo_active[i]),
+                            "spoilage_cost_factor": sku.spoilage_cost_factor,
+                            "stockout_penalty_multiplier": sku.stockout_penalty_multiplier,
+                            "sales_cases": actual_sales,
+                        }
+                    )
 
         df = pd.DataFrame(records)
         df["date"] = pd.to_datetime(df["date"])
@@ -257,7 +391,7 @@ class FoodserviceDataGenerator:
         )
         return df
 
-    def save(self, df: pd.DataFrame, output_path: Optional[str | Path] = None) -> Path:
+    def save(self, df: pd.DataFrame, output_path: str | Path | None = None) -> Path:
         """Saves generated dataset to raw CSV path."""
         if output_path is None:
             raw_dir = Path(self.config.get("data", {}).get("raw_dir", "data/raw"))

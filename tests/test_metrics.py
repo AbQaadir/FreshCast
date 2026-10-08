@@ -2,14 +2,11 @@
 
 import numpy as np
 import pandas as pd
-import pytest
 
 from freshcast.metrics.financial import calculate_supply_chain_financial_loss
 from freshcast.metrics.standard import (
-    calculate_standard_metrics,
     forecast_bias,
     mean_absolute_error,
-    root_mean_squared_error,
     weighted_absolute_percentage_error,
 )
 
@@ -33,14 +30,16 @@ def test_standard_metrics():
 def test_asymmetric_financial_loss():
     # Case 1: Over-forecast by 10 units of $50 cost meat item with 1.0 spoilage factor
     # Case 2: Under-forecast by 10 units with margin = $30 ($100 price - $70 cost) and penalty = 1.5
-    df = pd.DataFrame({
-        "sales_cases": [100.0, 100.0],
-        "pred_sales": [110.0, 90.0],
-        "unit_cost": [50.0, 70.0],
-        "actual_unit_price": [75.0, 100.0],
-        "spoilage_cost_factor": [1.0, 1.0],
-        "stockout_penalty_multiplier": [1.5, 1.5],
-    })
+    df = pd.DataFrame(
+        {
+            "sales_cases": [100.0, 100.0],
+            "pred_sales": [110.0, 90.0],
+            "unit_cost": [50.0, 70.0],
+            "actual_unit_price": [75.0, 100.0],
+            "spoilage_cost_factor": [1.0, 1.0],
+            "stockout_penalty_multiplier": [1.5, 1.5],
+        }
+    )
 
     fin = calculate_supply_chain_financial_loss(
         df,

@@ -43,15 +43,11 @@ class CalendarFeatureExtractor:
 
         # Holiday features
         unique_dates = pd.Series(dates.unique())
-        holiday_dict = {
-            d: int(d in self.holiday_calendar) for d in unique_dates
-        }
+        holiday_dict = {d: int(d in self.holiday_calendar) for d in unique_dates}
         df["is_holiday"] = dates.map(holiday_dict).fillna(0).astype(int)
 
         # Pre-holiday rush indicator (e.g. within 3 days before a holiday)
-        holiday_dates = set(
-            d for d in unique_dates if d in self.holiday_calendar
-        )
+        holiday_dates = set(d for d in unique_dates if d in self.holiday_calendar)
         days_to_holiday = []
         for d in dates:
             upcoming = [h for h in holiday_dates if 0 <= (h - d).days <= 7]

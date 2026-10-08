@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-from typing import Any, Dict, Optional
-
 import numpy as np
 import pandas as pd
 
@@ -17,9 +15,7 @@ class NaiveSeasonalForecaster(BaseDemandForecaster):
         super().__init__(name=f"Naive Seasonal (t-{lag})")
         self.lag = lag
 
-    def fit(
-        self, X: pd.DataFrame, y: pd.Series, **kwargs
-    ) -> NaiveSeasonalForecaster:
+    def fit(self, X: pd.DataFrame, y: pd.Series, **kwargs) -> NaiveSeasonalForecaster:
         self.is_fitted = True
         return self
 
@@ -41,9 +37,7 @@ class MovingAverageForecaster(BaseDemandForecaster):
         self.window = window
         self.global_mean: float = 0.0
 
-    def fit(
-        self, X: pd.DataFrame, y: pd.Series, **kwargs
-    ) -> MovingAverageForecaster:
+    def fit(self, X: pd.DataFrame, y: pd.Series, **kwargs) -> MovingAverageForecaster:
         self.global_mean = float(y.mean())
         self.is_fitted = True
         return self

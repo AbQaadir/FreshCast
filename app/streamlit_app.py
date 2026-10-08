@@ -7,7 +7,6 @@ safety stock & reorder point calculation, and model backtest transparency.
 
 from __future__ import annotations
 
-import logging
 from pathlib import Path
 
 import joblib
@@ -97,7 +96,6 @@ def main():
     model = bundle["model"]
     pipeline = bundle["pipeline"]
     feature_imp = bundle.get("feature_importance")
-    eval_df = bundle.get("evaluation_df")
 
     # Sidebar Branding & Controls
     st.sidebar.markdown(
@@ -158,9 +156,11 @@ def main():
     )
 
     # Filter data for selected DC & SKU
-    series_raw = df_raw[
-        (df_raw["dc_id"] == selected_dc_id) & (df_raw["sku_id"] == selected_sku_id)
-    ].sort_values("date").reset_index(drop=True)
+    series_raw = (
+        df_raw[(df_raw["dc_id"] == selected_dc_id) & (df_raw["sku_id"] == selected_sku_id)]
+        .sort_values("date")
+        .reset_index(drop=True)
+    )
 
     sku_meta = series_raw.iloc[-1]
     shelf_life = sku_meta["shelf_life_days"]
@@ -169,7 +169,10 @@ def main():
     base_price = sku_meta["base_unit_price"]
 
     # Header
-    st.markdown('<div class="main-header">FreshCast: Foodservice Demand Forecasting</div>', unsafe_allow_html=True)
+    st.markdown(
+        '<div class="main-header">FreshCast: Foodservice Demand Forecasting</div>',
+        unsafe_allow_html=True,
+    )
     st.markdown(
         f'<div class="sub-header">Operational intelligence for <b>{sku_meta["dc_name"]}</b> • '
         f'Active SKU: <b>{sku_meta["sku_name"]}</b> ({sku_meta["category"]})</div>',
@@ -185,11 +188,13 @@ def main():
         )
 
     # Tabs
-    tab_planner, tab_benchmarks, tab_financials = st.tabs([
-        "📈 14-Day Demand & Reorder Planner",
-        "🏆 Model Benchmark & Walk-Forward Validation",
-        "💰 Supply Chain Financials & Spoilage P&L",
-    ])
+    tab_planner, tab_benchmarks, tab_financials = st.tabs(
+        [
+            "📈 14-Day Demand & Reorder Planner",
+            "🏆 Model Benchmark & Walk-Forward Validation",
+            "💰 Supply Chain Financials & Spoilage P&L",
+        ]
+    )
 
     # ---------------- TAB 1: DEMAND & REORDER PLANNER ----------------
     with tab_planner:
@@ -199,7 +204,6 @@ def main():
 
         # Build feature row for each future day
         future_rows = []
-        extended_df = series_raw.copy()
 
         # Iterative forecast simulation
         for f_date in future_dates:
@@ -245,8 +249,12 @@ def main():
         future_df["forecasted_demand"] = np.round(preds).astype(int)
         # Approximate 90% confidence bands using recent residual std
         recent_std = series_raw["sales_cases"].tail(28).std()
-        future_df["upper_bound"] = np.round(future_df["forecasted_demand"] + (1.645 * recent_std)).astype(int)
-        future_df["lower_bound"] = np.maximum(0, np.round(future_df["forecasted_demand"] - (1.645 * recent_std))).astype(int)
+        future_df["upper_bound"] = np.round(
+            future_df["forecasted_demand"] + (1.645 * recent_std)
+        ).astype(int)
+        future_df["lower_bound"] = np.maximum(
+            0, np.round(future_df["forecasted_demand"] - (1.645 * recent_std))
+        ).astype(int)
 
         # Inventory Planner calculations
         avg_daily_demand = future_df["forecasted_demand"].mean()
@@ -262,7 +270,9 @@ def main():
             st.metric(
                 label=f"Projected {horizon}-Day Demand",
                 value=f"{total_projected_cases:,} cases",
-                delta=f"+{what_if_discount}% promo lift" if what_if_discount > 0 else "Baseline price",
+                delta=(
+                    f"+{what_if_discount}% promo lift" if what_if_discount > 0 else "Baseline price"
+                ),
             )
         with col2:
             st.metric(
@@ -274,7 +284,7 @@ def main():
             st.metric(
                 label="Reorder Point (ROP)",
                 value=f"{reorder_point:,} cases",
-                help=f"Trigger replenishment order when physical inventory hits this threshold.",
+                help="Trigger replenishment order when physical inventory hits this threshold.",
             )
         with col4:
             st.metric(
@@ -293,36 +303,42 @@ def main():
         fig = go.Figure()
 
         # Historical Actuals
-        fig.add_trace(go.Scatter(
-            x=history_subset["date"],
-            y=history_subset["sales_cases"],
-            mode="lines+markers",
-            name="Historical Orders (Actual)",
-            line=dict(color="#1e293b", width=2),
-            marker=dict(size=4),
-        ))
+        fig.add_trace(
+            go.Scatter(
+                x=history_subset["date"],
+                y=history_subset["sales_cases"],
+                mode="lines+markers",
+                name="Historical Orders (Actual)",
+                line=dict(color="#1e293b", width=2),
+                marker=dict(size=4),
+            )
+        )
 
         # Prediction Confidence Band (Upper & Lower)
-        fig.add_trace(go.Scatter(
-            x=list(future_df["date"]) + list(future_df["date"])[::-1],
-            y=list(future_df["upper_bound"]) + list(future_df["lower_bound"])[::-1],
-            fill="toself",
-            fillcolor="rgba(14, 165, 233, 0.15)",
-            line=dict(color="rgba(255,255,255,0)"),
-            hoverinfo="skip",
-            showlegend=True,
-            name="90% Prediction Interval",
-        ))
+        fig.add_trace(
+            go.Scatter(
+                x=list(future_df["date"]) + list(future_df["date"])[::-1],
+                y=list(future_df["upper_bound"]) + list(future_df["lower_bound"])[::-1],
+                fill="toself",
+                fillcolor="rgba(14, 165, 233, 0.15)",
+                line=dict(color="rgba(255,255,255,0)"),
+                hoverinfo="skip",
+                showlegend=True,
+                name="90% Prediction Interval",
+            )
+        )
 
         # Forecast Curve
-        fig.add_trace(go.Scatter(
-            x=future_df["date"],
-            y=future_df["forecasted_demand"],
-            mode="lines+markers",
-            name=f"LightGBM Forecast ({horizon}d)",
-            line=dict(color="#0284c7", width=3, dash="dash"),
-            marker=dict(size=6, symbol="diamond"),
-        ))
+        fig.add_trace(
+            go.Scatter(
+                x=future_df["date"],
+                y=future_df["forecasted_demand"],
+                mode="lines+markers",
+                name=f"LightGBM Forecast ({horizon}d)",
+                line=dict(color="#0284c7", width=3, dash="dash"),
+                marker=dict(size=6, symbol="diamond"),
+            )
+        )
 
         # Reorder Point threshold horizontal guide
         fig.add_hline(
@@ -346,20 +362,25 @@ def main():
 
         # Daily Reorder Recommendation Table
         st.markdown("### 📋 Daily Order Recommendation Schedule")
-        future_display = future_df[["date", "forecasted_demand", "lower_bound", "upper_bound"]].copy()
+        future_display = future_df[
+            ["date", "forecasted_demand", "lower_bound", "upper_bound"]
+        ].copy()
         future_display["date"] = future_display["date"].dt.strftime("%A, %b %d, %Y")
-        future_display.columns = ["Delivery Date", "Forecasted Demand (Cases)", "P10 Lower Bound", "P90 Upper Bound"]
+        future_display.columns = [
+            "Delivery Date",
+            "Forecasted Demand (Cases)",
+            "P10 Lower Bound",
+            "P90 Upper Bound",
+        ]
         st.dataframe(future_display, use_container_width=True, hide_index=True)
 
     # ---------------- TAB 2: MODEL BENCHMARKS & BACKTESTING ----------------
     with tab_benchmarks:
         st.markdown("### 🏆 Walk-Forward Cross-Validation Benchmark")
-        st.markdown(
-            """
+        st.markdown("""
             To guarantee zero data leakage, FreshCast evaluates all models on **3 sequential, out-of-time walk-forward folds**
             (28 days per evaluation fold).
-            """
-        )
+            """)
 
         if summary_df is not None:
             # Summary Table
@@ -367,20 +388,28 @@ def main():
             styled_summary["wape"] = (styled_summary["wape"] * 100).round(2).astype(str) + "%"
             styled_summary["mae"] = styled_summary["mae"].round(2)
             styled_summary["rmse"] = styled_summary["rmse"].round(2)
-            styled_summary["total_financial_loss_usd"] = (
-                "$" + styled_summary["total_financial_loss_usd"].round(2).map("{:,.2f}".format)
-            )
-            styled_summary["spoilage_loss_usd"] = (
-                "$" + styled_summary["spoilage_loss_usd"].round(2).map("{:,.2f}".format)
-            )
-            styled_summary["stockout_loss_usd"] = (
-                "$" + styled_summary["stockout_loss_usd"].round(2).map("{:,.2f}".format)
-            )
+            styled_summary["total_financial_loss_usd"] = "$" + styled_summary[
+                "total_financial_loss_usd"
+            ].round(2).map("{:,.2f}".format)
+            styled_summary["spoilage_loss_usd"] = "$" + styled_summary["spoilage_loss_usd"].round(
+                2
+            ).map("{:,.2f}".format)
+            styled_summary["stockout_loss_usd"] = "$" + styled_summary["stockout_loss_usd"].round(
+                2
+            ).map("{:,.2f}".format)
 
             st.dataframe(
-                styled_summary[[
-                    "model", "wape", "mae", "rmse", "total_financial_loss_usd", "spoilage_loss_usd", "stockout_loss_usd"
-                ]],
+                styled_summary[
+                    [
+                        "model",
+                        "wape",
+                        "mae",
+                        "rmse",
+                        "total_financial_loss_usd",
+                        "spoilage_loss_usd",
+                        "stockout_loss_usd",
+                    ]
+                ],
                 use_container_width=True,
                 hide_index=True,
             )
@@ -396,9 +425,19 @@ def main():
                     y="wape",
                     text=(chart_df["wape"] * 100).round(1).astype(str) + "%",
                     color="model",
-                    color_discrete_sequence=["#0284c7", "#38bdf8", "#94a3b8", "#cbd5e1"],
+                    color_discrete_sequence=[
+                        "#0284c7",
+                        "#38bdf8",
+                        "#94a3b8",
+                        "#cbd5e1",
+                    ],
                 )
-                fig_wape.update_layout(showlegend=False, yaxis_title="WAPE", height=340, template="plotly_white")
+                fig_wape.update_layout(
+                    showlegend=False,
+                    yaxis_title="WAPE",
+                    height=340,
+                    template="plotly_white",
+                )
                 st.plotly_chart(fig_wape, use_container_width=True)
 
             with c2:
@@ -409,9 +448,19 @@ def main():
                     y="total_financial_loss_usd",
                     text=chart_df["total_financial_loss_usd"].map("${:,.0f}".format),
                     color="model",
-                    color_discrete_sequence=["#0f766e", "#14b8a6", "#f59e0b", "#ef4444"],
+                    color_discrete_sequence=[
+                        "#0f766e",
+                        "#14b8a6",
+                        "#f59e0b",
+                        "#ef4444",
+                    ],
                 )
-                fig_loss.update_layout(showlegend=False, yaxis_title="Net Loss (USD)", height=340, template="plotly_white")
+                fig_loss.update_layout(
+                    showlegend=False,
+                    yaxis_title="Net Loss (USD)",
+                    height=340,
+                    template="plotly_white",
+                )
                 st.plotly_chart(fig_loss, use_container_width=True)
 
         # Feature Importance
@@ -438,13 +487,11 @@ def main():
     # ---------------- TAB 3: FINANCIALS & SPOILAGE ----------------
     with tab_financials:
         st.markdown("### 🥩 Perishable Category Financial Loss Exposure")
-        st.markdown(
-            """
+        st.markdown("""
             Evaluating demand forecasting purely on RMSE ignores business reality.
             In foodservice distribution, **overstocking fresh meat & seafood destroys working capital via spoilage**,
             whereas **understocking damages long-term restaurant customer relationships**.
-            """
-        )
+            """)
 
         cat_report_path = Path("data/processed/category_evaluation_report.csv")
         if cat_report_path.exists():
@@ -477,7 +524,10 @@ def main():
                     y=["spoilage_loss_usd", "stockout_loss_usd"],
                     barmode="stack",
                     labels={"value": "Loss (USD)", "variable": "Loss Type"},
-                    color_discrete_map={"spoilage_loss_usd": "#ef4444", "stockout_loss_usd": "#f59e0b"},
+                    color_discrete_map={
+                        "spoilage_loss_usd": "#ef4444",
+                        "stockout_loss_usd": "#f59e0b",
+                    },
                 )
                 fig_breakdown.update_layout(height=360, template="plotly_white")
                 st.plotly_chart(fig_breakdown, use_container_width=True)

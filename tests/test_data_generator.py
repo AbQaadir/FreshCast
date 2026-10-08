@@ -1,7 +1,6 @@
 """Unit tests for foodservice data generator."""
 
 import pandas as pd
-import pytest
 
 from freshcast.data.generator import FoodserviceDataGenerator
 

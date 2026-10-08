@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import logging
 import warnings
-from typing import Any, Dict, Optional
+from typing import Any
 
 import numpy as np
 import pandas as pd
@@ -27,17 +27,17 @@ class ProphetForecaster(BaseDemandForecaster):
     Fits independent Prophet trend & seasonal components per (DC, SKU) series.
     """
 
-    def __init__(self, params: Optional[Dict[str, Any]] = None):
+    def __init__(self, params: dict[str, Any] | None = None):
         super().__init__(name="Facebook Prophet", params=params)
-        self.models: Dict[str, Any] = {}
+        self.models: dict[str, Any] = {}
         self.global_mean: float = 0.0
 
     def fit(
         self,
         X: pd.DataFrame,
         y: pd.Series,
-        date_series: Optional[pd.Series] = None,
-        series_id_series: Optional[pd.Series] = None,
+        date_series: pd.Series | None = None,
+        series_id_series: pd.Series | None = None,
         **kwargs,
     ) -> ProphetForecaster:
         if Prophet is None:
@@ -57,11 +57,13 @@ class ProphetForecaster(BaseDemandForecaster):
             else:
                 series_id_series = pd.Series(["global"] * len(X), index=X.index)
 
-        df = pd.DataFrame({
-            "ds": pd.to_datetime(date_series),
-            "y": y.values,
-            "series_id": series_id_series.values,
-        })
+        df = pd.DataFrame(
+            {
+                "ds": pd.to_datetime(date_series),
+                "y": y.values,
+                "series_id": series_id_series.values,
+            }
+        )
 
         # Fit a Prophet model per unique series
         for sid, group in df.groupby("series_id"):
@@ -84,8 +86,8 @@ class ProphetForecaster(BaseDemandForecaster):
     def predict(
         self,
         X: pd.DataFrame,
-        date_series: Optional[pd.Series] = None,
-        series_id_series: Optional[pd.Series] = None,
+        date_series: pd.Series | None = None,
+        series_id_series: pd.Series | None = None,
     ) -> np.ndarray:
         if not self.is_fitted:
             raise RuntimeError("ProphetForecaster must be fitted before calling predict.")
@@ -101,10 +103,13 @@ class ProphetForecaster(BaseDemandForecaster):
             else:
                 series_id_series = pd.Series(["global"] * len(X), index=X.index)
 
-        df = pd.DataFrame({
-            "ds": pd.to_datetime(date_series),
-            "series_id": series_id_series.values,
-        }, index=X.index)
+        df = pd.DataFrame(
+            {
+                "ds": pd.to_datetime(date_series),
+                "series_id": series_id_series.values,
+            },
+            index=X.index,
+        )
 
         preds = np.zeros(len(X), dtype=float)
 
