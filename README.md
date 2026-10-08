@@ -513,22 +513,5 @@ make mlflow-ui    # MLflow server on :5000
 make docker-up
 ```
 
----
-
-## 💼 Resume Bullet Points
-
-```markdown
-FreshCast — Enterprise Foodservice Demand Forecasting & Perishable Inventory Optimization
-Tech Stack: Python, LightGBM, XGBoost, DVC, MLflow, FastAPI, Docker, Streamlit, Pytest, GitHub Actions
-
-• Engineered an end-to-end multi-SKU demand forecasting and inventory replenishment engine for regional distribution centers, optimizing high-spoilage categories (Meats, Seafood, Produce).
-• Formulated a time-series feature pipeline generating 50+ temporal variables (autoregressive lags t-1 to t-28, shifted rolling stats, cyclical transforms, promotional price elasticity) with zero lookahead bias.
-• Executed expanding-window walk-forward cross-validation (3 sequential folds x 28 days), achieving a 19.87% WAPE with LightGBM (a 29.8% error reduction over baselines) and saving over $685,000 per cycle against asymmetric spoilage vs. stockout penalties.
-• Built full MLOps lifecycle tracking using DVC for data/pipeline lineage and MLflow for experiment tracking, parameter logging, and model registry governance.
-• Deployed production FastAPI REST inference endpoints (/forecast, /replenish) alongside an interactive Streamlit planner dashboard with Docker Compose multi-container orchestration and automated GitHub Actions CI/CD.
-```
-
----
-
 ## 📄 License
 This project is licensed under the Apache 2.0 License.
