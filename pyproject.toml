@@ -1,0 +1,35 @@
+[project]
+name = "freshcast"
+version = "0.1.0"
+description = "Enterprise Foodservice Demand Forecasting & Perishable Inventory Optimization"
+readme = "README.md"
+requires-python = ">=3.11,<3.12"
+dependencies = [
+    "pandas>=2.1.0",
+    "numpy>=1.26.0",
+    "scipy>=1.11.0",
+    "scikit-learn>=1.4.0",
+    "lightgbm>=4.3.0",
+    "xgboost>=2.0.0",
+    "statsmodels>=0.14.0",
+    "prophet>=1.1.5",
+    "optuna>=3.6.0",
+    "streamlit>=1.35.0",
+    "plotly>=5.22.0",
+    "pyyaml>=6.0.1",
+    "joblib>=1.4.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0.0",
+    "black>=24.0.0",
+    "ruff>=0.4.0",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/freshcast"]

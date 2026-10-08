@@ -1,0 +1,27 @@
+artifact_path: /Users/qaadir/Desktop/dev/freshcast/mlruns/1/models/m-89a1e079826946439eb5edf91dd7d917/artifacts
+flavors:
+  lightgbm:
+    code: null
+    data: model.lgb
+    lgb_version: 4.7.0
+    model_class: lightgbm.basic.Booster
+    serialization_format: skops
+    skops_trusted_types:
+    - collections.OrderedDict
+    - lightgbm.sklearn.LGBMRegressor
+    - lightgbm.sklearn.LGBMClassifier
+    - lightgbm.basic.Booster
+  python_function:
+    data: model.lgb
+    env:
+      conda: conda.yaml
+      virtualenv: python_env.yaml
+    loader_module: mlflow.lightgbm
+    python_version: 3.11.15
+mlflow_version: 3.17.0
+model_id: m-89a1e079826946439eb5edf91dd7d917
+model_size_bytes: 850045
+model_uuid: m-89a1e079826946439eb5edf91dd7d917
+prompts: null
+run_id: 4ed2834676d24da0a45f5d552e2be096
+utc_time_created: '2026-10-08 04:26:36.351432'
